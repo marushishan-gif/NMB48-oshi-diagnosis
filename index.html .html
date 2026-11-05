@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f9eaf1">
+<title>NMB48 推しメン診断</title>
+<style>
+:root{--pink:#d94f8a;--pink-light:#fff0f6;--ink:#352833;--muted:#806f79;--line:#efd8e4}
+*{box-sizing:border-box}
+body{margin:0;padding:22px 14px 38px;background:linear-gradient(150deg,#fff5f8,#f7f3ff);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+main{max-width:620px;margin:0 auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 8px 28px rgba(120,65,95,.07)}
+.hero{text-align:center;padding:30px 22px}
+.heart{font-size:46px;margin:0 0 8px}
+.kicker{font-size:11px;letter-spacing:.16em;color:var(--muted);font-weight:800}
+h1{font-size:clamp(25px,7vw,34px);line-height:1.4;margin:12px 0}
+h2{font-size:21px;line-height:1.5;margin:10px 0 16px}
+p{line-height:1.8}
+.muted{color:var(--muted);font-size:14px}
+.badge{display:inline-block;background:var(--pink-light);color:#9e3568;padding:9px 13px;border-radius:999px;font-size:13px;font-weight:700;margin:8px 0 18px}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+.primary{display:block;width:100%;border:0;border-radius:14px;padding:15px;background:var(--pink);color:#fff;font-size:17px;font-weight:800;min-height:52px;box-shadow:0 5px 0 #b63d70}
+.primary:active{transform:translateY(2px);box-shadow:0 3px 0 #b63d70}
+.secondary{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:12px 16px;min-height:48px;font-weight:700}
+.hidden{display:none!important}
+.progressrow{display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:10px}
+.track{height:8px;border-radius:20px;background:#f2e5ec;overflow:hidden;margin-bottom:24px}
+.fill{height:100%;background:var(--pink);width:0;transition:width .2s}
+.option{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;min-height:56px;background:#fff;cursor:pointer}
+.option:has(input:checked){border-color:var(--pink);background:var(--pink-light)}
+.option input{width:19px;height:19px;accent-color:var(--pink);flex:0 0 auto}
+.option span{line-height:1.5}
+.nav{display:flex;gap:10px;margin-top:20px}
+.nav button{flex:1}
+.error{color:#b52d58;font-size:13px;min-height:22px;margin:8px 0}
+.result-head{text-align:center}
+.winner{font-size:29px;font-weight:900;color:#bd3e79;margin:12px 0 4px}
+.score{font-size:18px;font-weight:800}
+.rank{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#fff;margin:9px 0}
+.ranknum{font-weight:900;color:#b43b75;width:38px;flex:none}
+.rankname{font-weight:800}
+.rankmeta{font-size:12px;color:var(--muted);margin-top:3px}
+.rankscore{margin-left:auto;font-weight:900;white-space:nowrap}
+.note{font-size:12px;color:var(--muted);line-height:1.7}
+footer{text-align:center;margin:20px 0;color:var(--muted);font-size:11px;line-height:1.7}
+@media(min-width:520px){body{padding-top:40px}.card{padding:28px}}
+</style>
+</head>
+<body>
+<main>
+<section id="startScreen" class="card hero">
+  <p class="heart" aria-hidden="true">💗</p>
+  <div class="kicker">NMB48 FAN-MADE DIAGNOSIS</div>
+  <h1>あなたと相性ぴったりの<br>推しメンは誰？</h1>
+  <p class="muted">10個の質問に答えると、登録メンバーとの相性ランキングが出るよ！</p>
+  <div class="badge">メンバー44名 ＋ スペシャル枠1名</div>
+  <button id="startBtn" class="primary" type="button">診断スタート！ 💘</button>
+</section>
+
+<section id="quizScreen" class="card hidden" aria-live="polite">
+  <div class="progressrow"><span id="progressText">QUESTION 1 / 10</span><span id="progressPct">10%</span></div>
+  <div class="track"><div id="progressFill" class="fill"></div></div>
+  <h2 id="questionTitle"></h2>
+  <div id="options"></div>
+  <p id="error" class="error" role="alert"></p>
+  <div class="nav">
+    <button id="backBtn" type="button" class="secondary">戻る</button>
+    <button id="nextBtn" type="button" class="primary">次へ →</button>
+  </div>
+</section>
+
+<section id="resultScreen" class="hidden">
+  <div class="card result-head">
+    <p class="heart">🎉</p>
+    <div class="kicker">YOUR BEST MATCH</div>
+    <h2>あなたと相性ぴったりなのは…</h2>
+    <div id="winnerName" class="winner"></div>
+    <div id="winnerScore" class="score"></div>
+    <p id="winnerMeta" class="muted"></p>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h2>相性ランキング TOP 10</h2>
+    <div id="ranking"></div>
+    <p class="note">※回答の一致数をもとにしたファンメイドの診断です。身長・生年はNMB48公式プロフィールの公開情報を参照しています。実際の相性や本人の性格を示すものではありません。同点の場合は同じ順位として表示します。</p>
+  </div>
+  <button id="retryBtn" type="button" class="primary" style="margin-top:14px">もう一度診断する ↻</button>
+</section>
+<footer>この診断は非公式のファン制作コンテンツです。NMB48および各メンバーの公式企画ではありません。</footer>
+</main>
+<script>
+"use strict";
+// [name, cohort, status, Q1, Q2, Q3, Q4遊び, Q5無人島, 身長cm, 生年, 色, 運動会, 食べ物]
+const members = [["泉綾乃","ドラフト3期生","正規メンバー","C","B","A","B","D",163,2004,"C","B","C"],["塩月希依音","ドラフト3期生","正規メンバー","C","B","B","A","A",160,2005,"D","A","B"],["新澤菜央","6期生","正規メンバー","A","A","B","C","C",156,1998,"A","D","B"],["平山真衣","7期生","正規メンバー","B","D","B","D","A",165,2002,"A","C","A"],["黒島咲花","8期生","正規メンバー","A","B","C","B","A",156.2,2009,"D","C","D"],["坂下真心","8期生","正規メンバー","D","B","C","A","D",161,2005,"D","A","A"],["坂田心咲","8期生","正規メンバー","A","C","A","C","D",156,2005,"A","B","A"],["桜田彩叶","8期生","正規メンバー","A","A","A","B","A",159,2002,"A","D","A"],["龍本弥生","8期生","正規メンバー","A","A","A","C","C",164,2005,"A","D","B"],["福野杏実","8期生","正規メンバー","D","D","A","D","B",160,2005,"B","C","B"],["松岡さくら","8期生","正規メンバー","B","B","B","D","D",152,2003,"A","A","B"],["松本海日菜","8期生","正規メンバー","C","C","C","A","C",153,2008,"B","C","D"],["青原優花","9期生","正規メンバー","C","A","C","A","C",160.5,2007,"A","A","C"],["池田典愛","9期生","正規メンバー","A","D","A","D","B",161,2005,"D","C","B"],["板垣心和","9期生","正規メンバー","D","D","A","C","B",159.4,2005,"A","A","A"],["衣笠彩実","9期生","正規メンバー","A","C","A","C","C",154.1,2010,"C","C","D"],["田中美空","9期生","正規メンバー","B","B","A","A","A",150,2004,"D","D","D"],["西島梨央","9期生","正規メンバー","A","B","A","B","C",164,2004,"D","D","B"],["西田帆花","9期生","正規メンバー","C","D","A","A","B",157,2005,"C","B","C"],["宮本杏海","9期生","正規メンバー","C","A","B","A","C",150,2010,"A","A","B"],["石山千尋","10期生","正規メンバー","D","A","A","A","C",168,2008,"A","C","B"],["内田愛彩","10期生","正規メンバー","B","A","A","C","A",155,2004,"B","D","A"],["木根彩呂花","10期生","正規メンバー","D","A","A","A","C",160,2010,"A","D","D"],["澁谷愛紗南","10期生","正規メンバー","A","A","A","D","C",161,2006,"A","D","B"],["高橋ことね","10期生","正規メンバー","D","D","C","B","B",164,2003,"D","D","D"],["竹田京加","10期生","正規メンバー","C","C","B","A","D",155,2012,"B","C","D"],["田中ミリア","10期生","正規メンバー","A","A","C","C","C",154,2010,"D","D","A"],["中川朋香","10期生","正規メンバー","C","B","C","A","A",160,2006,"B","A","D"],["三鴨くるみ","10期生","正規メンバー","B","D","A","A","B",161,2001,"A","B","C"],["宮崎紗衣","10期生","正規メンバー","D","C","A","A","C",152,2010,"B","D","B"],["宮原心音","10期生","正規メンバー","C","C","A","A","C",154,2010,"B","C","C"],["村井悠莉","10期生","正規メンバー","C","B","A","C","D",152,2005,"D","B","A"],["山口美桜","10期生","正規メンバー","A","C","B","A","B",161,2007,"A","D","C"],["岡腰星来","11期生","正規メンバー","A","B","B","C","D",160.1,2006,"D","D","B"],["赤松昊","11期生","研究生","C","A","A","D","C",161.2,2010,"A","B","B"],["桜井ひまり","11期生","研究生","C","C","A","A","B",154,2008,"B","D","B"],["善家侑莉花","11期生","研究生","C","B","A","C","A",159.8,2004,"C","B","D"],["高橋樹奈","11期生","研究生","B","C","A","A","B",150,2009,"B","D","A"],["田中れい","11期生","研究生","D","D","A","D","B",155,2006,"B","C","A"],["谷口詩乃","11期生","研究生","D","B","C","C","A",155,2000,"C","D","A"],["西住美咲妃","11期生","研究生","C","A","A","A","C",159,2012,"D","B","D"],["福原琴美","11期生","研究生","B","B","A","C","A",149.5,2005,"A","D","B"],["藪内陽花","11期生","研究生","D","A","B","A","C",151,2008,"D","D","A"],["和田承子","11期生","研究生","C","C","C","A","C",157,2008,"D","C","B"],["金子剛","スペシャル枠","劇場支配人","B","B","D","D","A",null,null,"B","D","A"]];
+const questions = [{"title":"アイドルに一番求めるものは？","opts":["圧倒的なビジュアル","面白さ・トーク力","パフォーマンス力","個性爆発！"]},{"title":"どんな性格の子が好き？","opts":["あざとかわいい王道アイドル！","真面目でしっかり者","明るくて元気いっぱい！","おもしれー女"]},{"title":"好きなアイドルの髪型は？","opts":["ロングヘア","セミロング・ミディアム","ボブ・ショート","✨️👴✨️"]},{"title":"1日一緒に遊べるなら？","opts":["遊園地ではしゃぎたい！","おうちでまったり","オシャレなカフェ！","ショッピング🛍"]},{"title":"無人島に1人だけ連れていけるなら？","opts":["何でも解決してくれる人","どんな状況でも笑わせてくれる人","いるだけで癒される人","何があっても諦めない人"]},{"title":"好きな身長のタイプは？","opts":["〜154cm","155cm〜158cm","159cm〜164cm","165cm〜"]},{"title":"好きな年齢のタイプは？","opts":["2004年以前生まれ","2005年生まれ","2006〜2008年生まれ","2009年以降生まれ"]},{"title":"好きな色は？","opts":["ピンク🩷","赤・黄・オレンジ系","緑・黄緑・白系","青・水色・紫系"]},{"title":"運動会はどの競技に出る？","opts":["リレー","ダンス","球技（野球やサッカー）","応援係"]},{"title":"好きな食べ物は？","opts":["お肉系🍖","甘いもの","辛いもの","フルーツ🍎"]}];
+const $ = id => document.getElementById(id);
+let answers = Array(10).fill(null);
+let current = 0;
+function heightGroup(height) {
+  if (height === null || height === undefined) return null;
+  if (height < 155) return "A";
+  if (height < 159) return "B";
+  if (height < 165) return "C";
+  return "D";
+}
+function birthGroup(year) {
+  if (year === null || year === undefined) return null;
+  if (year <= 2004) return "A";
+  if (year === 2005) return "B";
+  if (year <= 2008) return "C";
+  return "D";
+}
+function memberAnswers(m) {
+  return [m[3],m[4],m[5],m[6],m[7],(m[0]==="金子剛"?"D":heightGroup(m[8])),(m[0]==="金子剛"?"A":birthGroup(m[9])),m[10],m[11],m[12]];
+}
+function showScreen(which){
+  $("startScreen").classList.toggle("hidden",which!=="start");
+  $("quizScreen").classList.toggle("hidden",which!=="quiz");
+  $("resultScreen").classList.toggle("hidden",which!=="result");
+}
+function renderQuestion(){
+  const q=questions[current];
+  $("progressText").textContent=`QUESTION ${current+1} / ${questions.length}`;
+  $("progressPct").textContent=`${Math.round((current+1)/questions.length*100)}%`;
+  $("progressFill").style.width=`${(current+1)/questions.length*100}%`;
+  $("questionTitle").textContent=q.title;
+  $("options").replaceChildren();
+  q.opts.forEach((label,index)=>{
+    const value="ABCD"[index];
+    const row=document.createElement("label");
+    row.className="option";
+    const radio=document.createElement("input");
+    radio.type="radio"; radio.name="answer"; radio.value=value;
+    radio.checked=answers[current]===value;
+    const caption=document.createElement("span");
+    caption.textContent=`${value}. ${label}`;
+    row.append(radio,caption);
+    $("options").append(row);
+  });
+  $("backBtn").style.visibility=current===0?"hidden":"visible";
+  $("nextBtn").textContent=current===questions.length-1?"結果を見る 💗":"次へ →";
+  $("error").textContent="";
+}
+function showResults(){
+  const ranked=members.map(m=>{
+    const ma=memberAnswers(m);
+    let hits=0,total=0;
+    for(let i=0;i<questions.length;i++){
+      const memberAnswer=ma[i];
+      if(memberAnswer!==null){total++;if(memberAnswer===answers[i])hits++;}
+    }
+    const heightText=m[0]==="金子剛"?"身長区分D":(m[8]===null?"身長未登録":`${m[8]}cm`);
+    const yearText=m[0]==="金子剛"?"生年区分A":(m[9]===null?"生年未登録":`${m[9]}年生`);
+    return {name:m[0],cohort:m[1],status:m[2],heightText,yearText,hits,total,pct:Math.round(hits/total*100)};
+  }).sort((a,b)=>b.pct-a.pct||b.hits-a.hits||a.name.localeCompare(b.name,"ja"));
+  const best=ranked[0];
+  $("winnerName").textContent=best.name;
+  $("winnerScore").textContent=`相性 ${best.pct}%（${best.hits}/${best.total}問一致）`;
+  $("winnerMeta").textContent=`${best.cohort} ・ ${best.status} ・ ${best.heightText} ・ ${best.yearText}`;
+  $("ranking").replaceChildren();
+  let previousKey=null, previousRank=0;
+  ranked.slice(0,10).forEach((m,index)=>{
+    const key=`${m.pct}-${m.hits}-${m.total}`;
+    if(key!==previousKey){previousRank=index+1;previousKey=key;}
+    const row=document.createElement("div");row.className="rank";
+    const number=document.createElement("span");number.className="ranknum";number.textContent=`${previousRank}位`;
+    const info=document.createElement("div");info.style.minWidth="0";
+    const name=document.createElement("div");name.className="rankname";name.textContent=m.name;
+    const meta=document.createElement("div");meta.className="rankmeta";meta.textContent=`${m.cohort} ・ ${m.heightText} ・ ${m.yearText}`;
+    info.append(name,meta);
+    const score=document.createElement("span");score.className="rankscore";score.textContent=`${m.pct}%`;
+    row.append(number,info,score);$("ranking").append(row);
+  });
+  showScreen("result");
+}
+$("startBtn").addEventListener("click",()=>{
+  answers=Array(questions.length).fill(null);current=0;renderQuestion();showScreen("quiz");
+});
+$("backBtn").addEventListener("click",()=>{if(current>0){current--;renderQuestion();}});
+$("nextBtn").addEventListener("click",()=>{
+  const selected=document.querySelector('#options input[name="answer"]:checked');
+  if(!selected){$("error").textContent="回答を1つ選んでね！";return;}
+  answers[current]=selected.value;
+  if(current<questions.length-1){current++;renderQuestion();}else{showResults();}
+});
+$("retryBtn").addEventListener("click",()=>{answers=Array(questions.length).fill(null);current=0;showScreen("start");});
+</script>
+</body>
+</html>
